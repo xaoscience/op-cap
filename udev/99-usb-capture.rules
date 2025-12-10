@@ -1,0 +1,6 @@
+# Example udev rule to turn off USB autosuspend and create a symlink for a USB capture device
+# Replace idVendor and idProduct with your hardware's VID and PID
+
+# Example: idVendor=="0bda" idProduct=="5821" for a Realtek-based device — adjust as needed
+ACTION=="add|change", SUBSYSTEM=="video4linux", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="5821", SYMLINK+="usb-capture0"
+ACTION=="add|change", SUBSYSTEM=="usb", ATTR{idVendor}=="0bda", ATTR{idProduct}=="5821", TEST=="/sys/bus/usb/devices/%k/power/control", ATTR{power/control}:="on"

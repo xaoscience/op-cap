@@ -1,0 +1,1 @@
+This project was tested on Ubuntu 25.10 with NVIDIA 580 drivers. If you wish to expand compatibility or optimise the project, please feel free to make a pull request!

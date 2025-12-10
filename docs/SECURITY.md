@@ -1,0 +1,1 @@
+See .github/ISSUE_TEMPLATE to give security feedback. Dependencies are based on OS and apt, so version compatibility studies not required.
