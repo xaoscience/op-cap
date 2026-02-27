@@ -1,27 +1,30 @@
 #!/usr/bin/env bash
 # FFmpeg pipeline: read from a physical capture device and write to v4l2loopback with optional filters
-# Features: buffer validation, adaptive resolution fallback, HDR passthrough, optional delogo/overlay
-# Usage: sudo ./feed.sh /dev/video0 /dev/video10 [resolution] [fps] [format]
+# Features: buffer validation, HDR metadata preservation, optional delogo/overlay
+# Usage: ./feed.sh /dev/usb-video-capture1 /dev/video10 [resolution] [fps] [format]
+#
+# CRITICAL: HDR passthrough requires keeping NV12 format end-to-end.
+# Previous versions forced yuv420p output which stripped all HDR metadata.
+# v4l2loopback receives NV12 + V4L2 colorspace controls to signal HDR to readers.
 
 set -euo pipefail
 
-IN=${1:-/dev/video0}
+IN=${1:-/dev/usb-video-capture1}
 OUT=${2:-/dev/video10}
 VID_SIZE=${3:-${USB_CAPTURE_RES:-3840x2160}}
 FPS=${4:-${USB_CAPTURE_FPS:-30}}
 INPUT_FORMAT=${5:-${USB_CAPTURE_FORMAT:-NV12}}
 
-# Buffer validation: detect corrupted frames and log warnings
-VALIDATE_BUFFERS=${USB_CAPTURE_VALIDATE_BUFFERS:-1}
-CORRUPT_FRAME_THRESHOLD=${USB_CAPTURE_CORRUPT_THRESHOLD:-5}  # consecutive corrupted frames before fallback
-FALLBACK_RES=${USB_CAPTURE_FALLBACK_RES:-1920x1080}  # fallback if corruption detected
-
 # HDR handling modes:
-#   0 = auto (trust device, no color interpretation - may cause startup delay)
+#   0 = auto (trust device, no color interpretation)
 #   1 = force HDR interpretation (BT.2020/PQ) + tonemap to SDR (use if colors blown out)
-#   2 = force HDR interpretation (BT.2020/PQ) + passthrough - DEFAULT (fastest startup)
+#   2 = force HDR interpretation (BT.2020/PQ) + passthrough NV12 - DEFAULT
 #   3 = force SDR interpretation (Rec.709)
 HDR_MODE=${USB_CAPTURE_HDR_MODE:-2}
+
+# Output pixel format - NV12 preserves HDR metadata, yuv420p strips it
+# Only change to yuv420p if your loopback consumer cannot handle NV12
+OUTPUT_PIX_FMT=${USB_CAPTURE_OUTPUT_PIX_FMT:-nv12}
 
 # Optional overlay image (set via env, e.g. USB_CAPTURE_OVERLAY_URL or USB_CAPTURE_OVERLAY_FILE)
 OVERLAY_URL=${USB_CAPTURE_OVERLAY_URL:-}
@@ -86,93 +89,93 @@ if [ -n "$OVERLAY_FILE" ] && [ -f "$OVERLAY_FILE" ]; then
   OVERLAY_FILTER="[1:v]scale=${OVERLAY_SCALE}:-1[ovr];[0:v][ovr]overlay=${OVERLAY_X}:${OVERLAY_Y}"
 fi
 
-# Compose final filter
-if [ -n "$OVERLAY_FILTER" ]; then
-  if [ -n "$FILTERS" ]; then
-    # Complex filter with overlay
-    FILTER_COMPLEX="${OVERLAY_FILTER},${FILTERS},format=yuv420p"
-  else
-    FILTER_COMPLEX="${OVERLAY_FILTER},format=yuv420p"
-  fi
-  USE_FILTER_COMPLEX=1
-else
-  if [ -n "$FILTERS" ]; then
-    FINAL_VF="${FILTERS},format=yuv420p"
-  else
-    FINAL_VF="format=yuv420p"
-  fi
-  USE_FILTER_COMPLEX=0
-fi
-
-# Recommended: force pixel format expected by v4l2loopback: yuv420p
-
-# Build input format option if we know it
+# Build input format option
 INPUT_FMT_OPT=""
 if [ -n "$INPUT_PIX_FMT" ]; then
   INPUT_FMT_OPT="-input_format $INPUT_PIX_FMT"
 fi
 
-# HDR mode handling - build color interpretation and filter options
+# HDR mode: set input color metadata and output pixel format
 HDR_INPUT_OPTS=""
+HDR_OUTPUT_OPTS=""
 HDR_FILTER=""
 case "$HDR_MODE" in
   1)
-    # Force HDR interpretation + tonemap to SDR (Reinhard algorithm)
-    echo "  HDR Mode 1: Interpreting as BT.2020/PQ, tonemapping to SDR"
+    # HDR input + tonemap to SDR, yuv420p out
+    echo "  HDR Mode 1: BT.2020/PQ input, tonemapping to SDR yuv420p"
     HDR_INPUT_OPTS="-color_primaries bt2020 -color_trc smpte2084 -colorspace bt2020nc"
     HDR_FILTER="zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=reinhard:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p"
+    OUTPUT_PIX_FMT="yuv420p"
     ;;
   2)
-    # Force HDR interpretation, passthrough (for HDR-capable output)
-    echo "  HDR Mode 2: Interpreting as BT.2020/PQ, HDR passthrough"
+    # HDR passthrough: keep NV12, propagate color metadata to output
+    # This is what allows OBS/downstream to classify the stream as HDR
+    echo "  HDR Mode 2: BT.2020/PQ passthrough, NV12 preserved to loopback"
     HDR_INPUT_OPTS="-color_primaries bt2020 -color_trc smpte2084 -colorspace bt2020nc"
-    # No tonemapping, just ensure correct tagging
+    HDR_OUTPUT_OPTS="-color_primaries bt2020 -color_trc smpte2084 -colorspace bt2020nc -color_range tv"
+    OUTPUT_PIX_FMT="nv12"
     HDR_FILTER=""
     ;;
   3)
-    # Force SDR interpretation
-    echo "  HDR Mode 3: Forcing Rec.709/SDR interpretation"
+    # Force SDR
+    echo "  HDR Mode 3: Rec.709/SDR, yuv420p out"
     HDR_INPUT_OPTS="-color_primaries bt709 -color_trc bt709 -colorspace bt709"
+    OUTPUT_PIX_FMT="yuv420p"
     HDR_FILTER=""
     ;;
   *)
-    # Mode 0: Auto - trust device reporting
-    echo "  HDR Mode 0: Auto (trusting device color reporting)"
+    # Mode 0: Auto
+    echo "  HDR Mode 0: Auto (trusting device color reporting, NV12 preserved)"
+    OUTPUT_PIX_FMT="nv12"
     ;;
 esac
 
-# Use v4l2 to read from device, apply filters, then write to v4l2loopback
-echo "Starting FFmpeg: $IN -> $OUT at ${VID_SIZE}@${FPS}fps (format: ${INPUT_FORMAT})"
-if [ -n "$OVERLAY_FILE" ] && [ -f "$OVERLAY_FILE" ]; then
-  echo "  Overlay: $OVERLAY_FILE at position ${OVERLAY_X},${OVERLAY_Y}"
+echo "Starting FFmpeg: $IN -> $OUT at ${VID_SIZE}@${FPS}fps (format: ${INPUT_FORMAT}, out: ${OUTPUT_PIX_FMT})"
+
+# Build filter string
+FINAL_VF=""
+if [ -n "$HDR_FILTER" ] && [ -n "$FILTERS" ]; then
+  FINAL_VF="${HDR_FILTER},${FILTERS}"
+elif [ -n "$HDR_FILTER" ]; then
+  FINAL_VF="${HDR_FILTER}"
+elif [ -n "$FILTERS" ]; then
+  FINAL_VF="${FILTERS}"
 fi
 
-# Compose final filter chain with HDR processing if needed
-if [ -n "$HDR_FILTER" ]; then
-  if [ "$USE_FILTER_COMPLEX" = "1" ]; then
-    FILTER_COMPLEX="${OVERLAY_FILTER},${HDR_FILTER}"
-    [ -n "$FILTERS" ] && FILTER_COMPLEX="${FILTER_COMPLEX},${FILTERS}"
-  else
-    if [ -n "$FILTERS" ]; then
-      FINAL_VF="${HDR_FILTER},${FILTERS}"
-    else
-      FINAL_VF="${HDR_FILTER}"
-    fi
-  fi
-elif [ "$USE_FILTER_COMPLEX" != "1" ] && [ -z "$FINAL_VF" ]; then
-  FINAL_VF="format=yuv420p"
-fi
-
-if [ "$USE_FILTER_COMPLEX" = "1" ]; then
+# Run FFmpeg
+if [ -n "$OVERLAY_FILTER" ]; then
+  # Complex filter path (with overlay)
+  FILTER_COMPLEX="${OVERLAY_FILTER}"
+  [ -n "$FINAL_VF" ] && FILTER_COMPLEX="${FILTER_COMPLEX},${FINAL_VF}"
   ffmpeg -hide_banner -loglevel info \
+    -thread_queue_size 16 -rtbufsize 256M \
     -f v4l2 -framerate "$FPS" -video_size "$VID_SIZE" $INPUT_FMT_OPT $HDR_INPUT_OPTS -i "$IN" \
     $OVERLAY_INPUT \
     -filter_complex "$FILTER_COMPLEX" \
-    -vcodec rawvideo -pix_fmt yuv420p \
+    -vcodec rawvideo -pix_fmt "$OUTPUT_PIX_FMT" $HDR_OUTPUT_OPTS \
+    -f v4l2 -nostdin "$OUT" || echo "FFmpeg stopped"
+elif [ -n "$FINAL_VF" ]; then
+  ffmpeg -hide_banner -loglevel info \
+    -thread_queue_size 16 -rtbufsize 256M \
+    -f v4l2 -framerate "$FPS" -video_size "$VID_SIZE" $INPUT_FMT_OPT $HDR_INPUT_OPTS -i "$IN" \
+    -vf "$FINAL_VF" \
+    -vcodec rawvideo -pix_fmt "$OUTPUT_PIX_FMT" $HDR_OUTPUT_OPTS \
     -f v4l2 -nostdin "$OUT" || echo "FFmpeg stopped"
 else
+  # Clean passthrough: no filter, just relay with color metadata
   ffmpeg -hide_banner -loglevel info \
+    -thread_queue_size 16 -rtbufsize 256M \
     -f v4l2 -framerate "$FPS" -video_size "$VID_SIZE" $INPUT_FMT_OPT $HDR_INPUT_OPTS -i "$IN" \
-    -vf "$FINAL_VF" -vcodec rawvideo -pix_fmt yuv420p \
+    -vcodec rawvideo -pix_fmt "$OUTPUT_PIX_FMT" $HDR_OUTPUT_OPTS \
     -f v4l2 -nostdin "$OUT" || echo "FFmpeg stopped"
+fi
+
+# After FFmpeg exits: set V4L2 colorspace controls on loopback so readers see HDR metadata
+# This is read by OBS when it opens the loopback device
+if [ "$HDR_MODE" = "2" ] || [ "$HDR_MODE" = "0" ]; then
+  v4l2-ctl -d "$OUT" \
+    --set-ctrl=colorspace=9 \
+    --set-ctrl=ycbcr_enc=11 \
+    --set-ctrl=quantization=2 \
+    --set-ctrl=xfer_func=5 2>/dev/null || true
 fi

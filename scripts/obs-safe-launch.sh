@@ -17,10 +17,19 @@ OBS_ARGS=""
 LOG_DIR="${HOME}/.cache/obs-safe-launch"
 LOG_FILE="$LOG_DIR/obs-crash-$(date +%Y%m%d_%H%M%S).log"
 PID_FILE="/tmp/obs-safe-launch-monitor.pid"
+FEED_PID_FILE="/tmp/obs-safe-launch-feed.pid"
 MONITOR_INTERVAL=5
 RECOVERY_TIMEOUT=30
 CRASH_THRESHOLD=3  # Max consecutive crashes before requiring user intervention
 CRASH_COUNT=0
+
+# Loopback config
+LOOPBACK_DEV="/dev/video10"
+LOOPBACK_NR=10
+CAP_RES="${USB_CAPTURE_RES:-3840x2160}"
+CAP_FPS="${USB_CAPTURE_FPS:-30}"
+CAP_FMT="${USB_CAPTURE_FORMAT:-NV12}"
+HDR_MODE="${USB_CAPTURE_HDR_MODE:-2}"
 
 # Colors
 RED='\033[0;31m'
@@ -100,23 +109,103 @@ check_usb_device() {
 }
 
 # Check v4l2loopback is loaded
+# exclusive_caps=0: allows both writer (feed.sh) and readers (OBS) simultaneously
+# exclusive_caps=1 would block reading while writing - wrong for our use case
 verify_v4l2loopback() {
-  if ! lsmod | grep -q v4l2loopback; then
-    log_info "Loading v4l2loopback module..."
-    if ! sudo modprobe v4l2loopback video_nr=10 card_label="USB_Capture_Loop" exclusive_caps=1 2>&1; then
-      log_warn "Failed to load v4l2loopback (may not be installed)"
-      return 1
+  if lsmod | grep -q v4l2loopback; then
+    # Check if it was loaded with wrong params (exclusive_caps=1)
+    local excaps
+    excaps=$(cat /sys/module/v4l2loopback/parameters/exclusive_caps 2>/dev/null | cut -d, -f1)
+    if [ "$excaps" = "Y" ]; then
+      log_warn "v4l2loopback loaded with exclusive_caps=1 (blocks readers). Reloading..."
+      sudo modprobe -r v4l2loopback 2>/dev/null || true
+      sleep 1
+    else
+      if [ -c "$LOOPBACK_DEV" ]; then
+        log_ok "v4l2loopback available at $LOOPBACK_DEV"
+        return 0
+      fi
     fi
-    sleep 2
   fi
 
-  if [ -c /dev/video10 ]; then
-    log_ok "v4l2loopback available at /dev/video10"
+  log_info "Loading v4l2loopback (exclusive_caps=0, video_nr=${LOOPBACK_NR})..."
+  if ! sudo modprobe v4l2loopback \
+      video_nr="$LOOPBACK_NR" \
+      card_label="USB_Capture_Loop" \
+      exclusive_caps=0 \
+      max_width=3840 max_height=2160 2>&1; then
+    log_warn "Failed to load v4l2loopback (may not be installed)"
+    return 1
+  fi
+  sleep 2
+
+  if [ -c "$LOOPBACK_DEV" ]; then
+    log_ok "v4l2loopback available at $LOOPBACK_DEV"
     return 0
   fi
 
-  log_warn "v4l2loopback module loaded but /dev/video10 not found"
+  log_warn "v4l2loopback module loaded but $LOOPBACK_DEV not found"
   return 1
+}
+
+# Start feed.sh: bridge USB device -> v4l2loopback
+start_feed() {
+  if [ -z "$DEVICE" ]; then
+    log_warn "No device specified, skipping feed.sh"
+    return 0
+  fi
+
+  local feed_script="$BASEDIR/ffmpeg/feed.sh"
+  if [ ! -x "$feed_script" ]; then
+    log_error "feed.sh not found or not executable at $feed_script"
+    return 1
+  fi
+
+  log_info "Starting feed.sh: $DEVICE -> $LOOPBACK_DEV (${CAP_RES}@${CAP_FPS} ${CAP_FMT} HDR_MODE=${HDR_MODE})"
+  USB_CAPTURE_HDR_MODE="$HDR_MODE" \
+    bash "$feed_script" "$DEVICE" "$LOOPBACK_DEV" "$CAP_RES" "$CAP_FPS" "$CAP_FMT" \
+    >> "$LOG_FILE" 2>&1 &
+  echo $! > "$FEED_PID_FILE"
+  log_ok "feed.sh started (PID: $(cat $FEED_PID_FILE))"
+
+  # Give feed.sh a moment to connect and declare format on loopback
+  sleep 3
+
+  if ! kill -0 "$(cat $FEED_PID_FILE)" 2>/dev/null; then
+    log_error "feed.sh died immediately - check device and log: $LOG_FILE"
+    return 1
+  fi
+}
+
+# Watchdog: restart feed.sh if it dies, without restarting OBS
+supervise_feed() {
+  while true; do
+    sleep 5
+    local fpid
+    fpid=$(cat "$FEED_PID_FILE" 2>/dev/null || echo "")
+    if [ -z "$fpid" ] || ! kill -0 "$fpid" 2>/dev/null; then
+      log_warn "feed.sh died (PID: ${fpid:-unknown}). Restarting in 2s..."
+      sleep 2
+      start_feed || log_error "feed.sh restart failed"
+    fi
+  done
+}
+
+# Stop feed.sh
+stop_feed() {
+  if [ -f "$FEED_PID_FILE" ]; then
+    local fpid
+    fpid=$(cat "$FEED_PID_FILE")
+    if kill -0 "$fpid" 2>/dev/null; then
+      log_info "Stopping feed.sh (PID: $fpid)"
+      kill -TERM "$fpid" 2>/dev/null || true
+      sleep 2
+      kill -9 "$fpid" 2>/dev/null || true
+    fi
+    rm -f "$FEED_PID_FILE"
+  fi
+  # Kill any orphaned ffmpeg pointing at the USB device
+  pkill -f "ffmpeg.*usb-video-capture" 2>/dev/null || true
 }
 
 # Start auto-reconnect monitor if device specified
@@ -270,30 +359,37 @@ main() {
 
   pre_flight_checks
   load_driver_optimizations
-  start_auto_reconnect
 
-  # Set up cleanup trap
+  # Set up cleanup trap early
   trap 'cleanup' EXIT INT TERM
 
-  log_info "Launching OBS..."
+  # Step 1: load loopback
+  verify_v4l2loopback || { log_error "Cannot continue without v4l2loopback"; exit 1; }
+
+  # Step 2: start feed.sh to bridge USB -> loopback, supervise it in background
+  start_feed
+  supervise_feed &
+  local supervisor_pid=$!
+  echo "$supervisor_pid" >> "$PID_FILE"
+
+  # Step 3: start auto-reconnect for USB device recovery
+  start_auto_reconnect
+
+  log_info "Launching OBS pointed at loopback: $LOOPBACK_DEV"
+  log_info "OBS should NOT be configured to open $DEVICE directly"
   echo ""
 
-  # Main loop: launch OBS and restart if it crashes
+  # Main loop: launch OBS, restart on crash
   while true; do
-    # Prepare OBS environment
     export GSETTINGS_SCHEMA_DIR=/usr/share/glib-2.0/schemas
 
-    # Launch OBS
     if obs $OBS_ARGS; then
-      # Clean exit
       log_info "OBS exited normally"
       CRASH_COUNT=0
       break
     else
       EXIT_CODE=$?
-      # OBS crashed or had an error
       if ! monitor_obs $$; then
-        # Crash threshold exceeded
         break
       fi
     fi
@@ -305,6 +401,7 @@ main() {
 # Cleanup function
 cleanup() {
   log_info "Cleaning up..."
+  stop_feed
   stop_auto_reconnect
   rm -f "$PID_FILE"
   log_info "Shutdown complete"
