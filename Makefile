@@ -1,9 +1,22 @@
+SHIM_SRC  := src/v4l2-hdr-shim.c
+SHIM_SO   := src/v4l2-hdr-shim.so
+
 all: build
 
-build:
+build: $(SHIM_SO)
 	gcc scripts/usbreset.c -o scripts/usbreset || true
 	chmod +x scripts/*.sh || true
 	chmod +x ffmpeg/*.sh || true
+
+$(SHIM_SO): $(SHIM_SRC)
+	gcc -shared -fPIC -O2 -o $@ $< -ldl
+	@echo "✓ v4l2-hdr-shim.so built at $@"
+
+shim: $(SHIM_SO)
+
+shim-debug: $(SHIM_SRC)
+	gcc -shared -fPIC -O2 -DV4L2_HDR_SHIM_DEBUG -o $(SHIM_SO) $< -ldl
+	@echo "✓ v4l2-hdr-shim.so (debug) built at $(SHIM_SO)"
 
 install: build
 	sudo ./scripts/install.sh
@@ -45,6 +58,6 @@ uninstall:
 	@sudo ./scripts/uninstall.sh || true
 
 clean:
-	rm -f scripts/usbreset
+	rm -f scripts/usbreset $(SHIM_SO)
 
 distclean: clean uninstall

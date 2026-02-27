@@ -26,6 +26,18 @@ HDR_MODE=${USB_CAPTURE_HDR_MODE:-2}
 # Only change to yuv420p if your loopback consumer cannot handle NV12
 OUTPUT_PIX_FMT=${USB_CAPTURE_OUTPUT_PIX_FMT:-nv12}
 
+# LD_PRELOAD shim: patches VIDIOC_S_FMT colorspace to BT.2020/PQ when FFmpeg opens
+# the loopback output device. This is the only way to get the correct colorspace
+# into v4l2loopback — FFmpeg's v4l2 muxer always writes colorspace=0 (sRGB).
+_SHIM_SO="$(cd "$(dirname "$0")/.." && pwd)/src/v4l2-hdr-shim.so"
+FFMPEG_LD_PRELOAD=""
+if [ -f "$_SHIM_SO" ]; then
+  FFMPEG_LD_PRELOAD="$_SHIM_SO"
+else
+  echo "  WARN: v4l2-hdr-shim.so not found at $_SHIM_SO — loopback colorspace will be sRGB"
+  echo "        Build with: make -C $(dirname $_SHIM_SO) shim"
+fi
+
 # Optional overlay image (set via env, e.g. USB_CAPTURE_OVERLAY_URL or USB_CAPTURE_OVERLAY_FILE)
 OVERLAY_URL=${USB_CAPTURE_OVERLAY_URL:-}
 OVERLAY_FILE=${USB_CAPTURE_OVERLAY_FILE:-}
@@ -142,11 +154,14 @@ elif [ -n "$FILTERS" ]; then
   FINAL_VF="${FILTERS}"
 fi
 
-# Run FFmpeg
+# Run FFmpeg under LD_PRELOAD shim so VIDIOC_S_FMT on the loopback output device
+# gets BT.2020/PQ colorspace rather than the sRGB default the v4l2 muxer writes.
+# V4L2_HDR_SHIM_DEVICE restricts patching to the loopback output only.
 if [ -n "$OVERLAY_FILTER" ]; then
   # Complex filter path (with overlay)
   FILTER_COMPLEX="${OVERLAY_FILTER}"
   [ -n "$FINAL_VF" ] && FILTER_COMPLEX="${FILTER_COMPLEX},${FINAL_VF}"
+  LD_PRELOAD="${FFMPEG_LD_PRELOAD}" V4L2_HDR_SHIM_DEVICE="$OUT" \
   ffmpeg -hide_banner -loglevel info \
     -thread_queue_size 16 -rtbufsize 256M \
     -f v4l2 -framerate "$FPS" -video_size "$VID_SIZE" $INPUT_FMT_OPT $HDR_INPUT_OPTS -i "$IN" \
@@ -155,6 +170,7 @@ if [ -n "$OVERLAY_FILTER" ]; then
     -vcodec rawvideo -pix_fmt "$OUTPUT_PIX_FMT" $HDR_OUTPUT_OPTS \
     -f v4l2 -nostdin "$OUT" || echo "FFmpeg stopped"
 elif [ -n "$FINAL_VF" ]; then
+  LD_PRELOAD="${FFMPEG_LD_PRELOAD}" V4L2_HDR_SHIM_DEVICE="$OUT" \
   ffmpeg -hide_banner -loglevel info \
     -thread_queue_size 16 -rtbufsize 256M \
     -f v4l2 -framerate "$FPS" -video_size "$VID_SIZE" $INPUT_FMT_OPT $HDR_INPUT_OPTS -i "$IN" \
@@ -163,19 +179,10 @@ elif [ -n "$FINAL_VF" ]; then
     -f v4l2 -nostdin "$OUT" || echo "FFmpeg stopped"
 else
   # Clean passthrough: no filter, just relay with color metadata
+  LD_PRELOAD="${FFMPEG_LD_PRELOAD}" V4L2_HDR_SHIM_DEVICE="$OUT" \
   ffmpeg -hide_banner -loglevel info \
     -thread_queue_size 16 -rtbufsize 256M \
     -f v4l2 -framerate "$FPS" -video_size "$VID_SIZE" $INPUT_FMT_OPT $HDR_INPUT_OPTS -i "$IN" \
     -vcodec rawvideo -pix_fmt "$OUTPUT_PIX_FMT" $HDR_OUTPUT_OPTS \
     -f v4l2 -nostdin "$OUT" || echo "FFmpeg stopped"
-fi
-
-# After FFmpeg exits: set V4L2 colorspace controls on loopback so readers see HDR metadata
-# This is read by OBS when it opens the loopback device
-if [ "$HDR_MODE" = "2" ] || [ "$HDR_MODE" = "0" ]; then
-  v4l2-ctl -d "$OUT" \
-    --set-ctrl=colorspace=9 \
-    --set-ctrl=ycbcr_enc=11 \
-    --set-ctrl=quantization=2 \
-    --set-ctrl=xfer_func=5 2>/dev/null || true
 fi
