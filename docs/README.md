@@ -4,6 +4,8 @@ Stabilise high-throughput USB capture devices for OBS on Linux. Provides auto-re
 
 ## Features
 
+- **Automatic crash recovery** — OBS restarts automatically on USB device failure (3 retry limit)
+- **Stream resumption** — Monitors logs to detect active streams, auto-resumes if one was broadcasting
 - **v4l2loopback isolation** — FFmpeg feeds capture to `/dev/video10`, preventing OBS crashes from driver issues
 - **Auto-reconnect** — Monitors device and restarts feed on disconnect
 - **USB reset & driver rebind** — Recovers from device hangs without reboot
@@ -170,16 +172,44 @@ If your capture card frequently disconnects or crashes OBS, use the **safety lau
 lsusb | grep -i "your-device"
 # Example: ID 3188:1000 ITE UGREEN 25173
 
-# Launch with safety features enabled
-make install-safe-launcher
-obs-safe --device /dev/video0 --vidpid 3188:1000
+# Launch with safety features enabled (with auto-reconnect + auto-resume)
+./scripts/obs-safe-launch.sh --device /dev/video0 --vidpid 3188:1000
+
+# Or for direct device mode (skip v4l2loopback relay) 
+./scripts/obs-safe-launch.sh --no-loopback --device /dev/video0
+
+# Launch OBS without device requirement (configure sources manually)
+./scripts/obs-safe-launch.sh --no-device
+
+# Disable auto-resume if you don't want stream to restart after crash
+./scripts/obs-safe-launch.sh --no-auto-resume --device /dev/video0
 ```
 
-This launcher:
-- Monitors USB device health
-- Auto-restarts OBS if it crashes
-- Logs all issues to `~/.cache/obs-safe-launch/`
-- Prevents "double free or corruption" crashes
+**Safety launcher features:**
+- ✅ Monitors USB device health
+- ✅ Auto-restarts OBS on crash (max 3 attempts, 3s recovery timeout)
+- ✅ Detects if streaming was active before crash
+- ✅ Auto-resumes stream if it was broadcasting (enabled by default)
+- ✅ Captures full OBS output to log file for diagnostics
+- ✅ Logs to `~/.cache/obs-safe-launch/`
+
+**Safety launcher flags:**
+| Flag | Purpose |
+|------|---------|
+| `--device PATH` | Specify USB capture device |
+| `--vidpid VID:PID` | USB vendor:product ID for device reset |
+| `--no-loopback` | Skip v4l2loopback, use device directly in OBS |
+| `--no-device` | Launch OBS without device (configure manually) |
+| `--auto-resume` | Auto-resume streaming after crash (default: enabled) |
+| `--no-auto-resume` | Disable auto-stream-resume |
+| `--obs-args "ARGS"` | Pass additional arguments to OBS |
+
+**How crash recovery works:**
+1. OBS crashes → wrapper detects exit code 134 (SIGABRT)
+2. Wrapper waits 3 seconds for device/system to stabilize
+3. Checks OBS logs for active stream indication
+4. Restarts OBS with `--startstreaming` flag if stream was active
+5. If OBS crashes 3 times, requires human intervention
 
 See **[WAYLAND_OPTIMISATION.md](WAYLAND_OPTIMISATION.md#usb-capture-device-crash-recovery)** for detailed configuration and troubleshooting.
 
