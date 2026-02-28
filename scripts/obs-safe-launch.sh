@@ -21,7 +21,7 @@ PID_FILE="/tmp/obs-safe-launch-monitor.pid"
 FEED_PID_FILE="/tmp/obs-safe-launch-feed.pid"
 STREAM_STATE_FILE="/tmp/obs-safe-launch-streaming.state"
 MONITOR_INTERVAL=5
-RECOVERY_TIMEOUT=30
+RECOVERY_TIMEOUT=3
 CRASH_THRESHOLD=3  # Max consecutive crashes before requiring user intervention
 CRASH_COUNT=0
 WAS_STREAMING=0
@@ -506,12 +506,14 @@ main() {
   while true; do
     export GSETTINGS_SCHEMA_DIR=/usr/share/glib-2.0/schemas
 
-    if obs $OBS_ARGS; then
+    obs $OBS_ARGS 2>&1 | tee -a "$LOG_FILE"
+    EXIT_CODE=${PIPESTATUS[0]}
+    
+    if [ $EXIT_CODE -eq 0 ]; then
       log_info "OBS exited normally"
       CRASH_COUNT=0
       break
     else
-      EXIT_CODE=$?
       if ! handle_obs_exit "$EXIT_CODE"; then
         break
       fi
