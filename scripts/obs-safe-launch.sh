@@ -397,10 +397,17 @@ load_driver_optimizations() {
 # Check if OBS was streaming via websocket or log file
 detect_streaming_state() {
   # Check recent log for streaming indicators
-  if tail -50 "$LOG_FILE" 2>/dev/null | grep -q "==== Streaming Start\|output 'adv_stream'.*started"; then
+  if [ ! -f "$LOG_FILE" ]; then
+    log_info "Log file doesn't exist yet: $LOG_FILE"
+    return 1
+  fi
+  
+  if tail -100 "$LOG_FILE" 2>/dev/null | grep -q "==== Streaming Start"; then
+    log_info "Detected active stream (found 'Streaming Start' in log)"
     echo "1" > "$STREAM_STATE_FILE"
     return 0
   fi
+  log_info "No active stream found in logs"
   return 1
 }
 
@@ -417,11 +424,12 @@ handle_obs_exit() {
   log_warn "OBS process exited with code: $exit_code"
 
   # Check if this was a crash (non-zero exit or signal)
-  if [ $exit_code -ne 0 ]; then
+  if [ "$exit_code" -ne 0 ]; then
     ((CRASH_COUNT++))
+    log_info "CRASH_COUNT incremented to: $CRASH_COUNT"
 
-    if [ $CRASH_COUNT -ge $CRASH_THRESHOLD ]; then
-      log_error "OBS crashed $CRASH_COUNT times. Requiring user intervention."
+    if [ $CRASH_COUNT -gt $CRASH_THRESHOLD ]; then
+      log_error "OBS crashed $CRASH_COUNT times (threshold: $CRASH_THRESHOLD). Requiring user intervention."
       log_error "Common causes:"
       log_error "  - USB device disconnected (check journalctl -u usb-capture-ffmpeg.service)"
       log_error "  - Buffer corruption (run: sudo $BASEDIR/scripts/validate_capture.sh $DEVICE)"
@@ -449,12 +457,14 @@ handle_obs_exit() {
       fi
     fi
 
+    log_recovery "Returning 0 (continue loop)"
     return 0
   else
     CRASH_COUNT=0
+    log_info "Clean exit, resetting crash count"
     return 0
   fi
-}
+}  
 
 # Main launcher loop
 main() {
@@ -509,13 +519,23 @@ main() {
     obs $OBS_ARGS 2>&1 | tee -a "$LOG_FILE"
     EXIT_CODE=${PIPESTATUS[0]}
     
+    log_info "OBS exited with code: $EXIT_CODE"
+    
     if [ $EXIT_CODE -eq 0 ]; then
       log_info "OBS exited normally"
       CRASH_COUNT=0
       break
     else
-      if ! handle_obs_exit "$EXIT_CODE"; then
+      log_info "Calling handle_obs_exit with exit code: $EXIT_CODE"
+      handle_obs_exit "$EXIT_CODE"
+      HANDLE_RESULT=$?
+      log_info "handle_obs_exit returned: $HANDLE_RESULT"
+      
+      if [ $HANDLE_RESULT -ne 0 ]; then
+        log_info "Recovery failed, breaking loop"
         break
+      else
+        log_info "Recovery approved, restarting OBS in loop"
       fi
     fi
   done
