@@ -211,6 +211,11 @@ lsusb | grep -i "your-device"
 4. Restarts OBS with `--startstreaming` flag if stream was active
 5. If OBS crashes 3 times, requires human intervention
 
+**Note:** Auto-reconnect requires sudo for USB hardware recovery (device resets, driver rebind). To avoid password prompts during long-running crash recovery, install the sudoers rule:
+```bash
+bash scripts/install-sudoers.sh  # Allows specific recovery scripts only
+```
+
 See **[WAYLAND_OPTIMISATION.md](WAYLAND_OPTIMISATION.md#usb-capture-device-crash-recovery)** for detailed configuration and troubleshooting.
 
 ### Troubleshooting OBS Connection

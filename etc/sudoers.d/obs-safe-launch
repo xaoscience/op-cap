@@ -1,0 +1,16 @@
+# Allow passwordless sudo for OBS crash recovery scripts
+# Install: sudo visudo -c -f /home/jnxlr/PRO/WEB/CST/op-cap/etc/sudoers.d/obs-safe-launch && sudo cp /home/jnxlr/PRO/WEB/CST/op-cap/etc/sudoers.d/obs-safe-launch /etc/sudoers.d/
+#
+# This allows the user to run auto_reconnect.sh and related USB recovery
+# scripts without password prompts during crash recovery.
+#
+# Security: Limited to specific scripts in user's project directory.
+
+# Configured for user: jnxlr
+jnxlr ALL=(root) NOPASSWD: /home/jnxlr/PRO/WEB/CST/op-cap/scripts/auto_reconnect.sh
+jnxlr ALL=(root) NOPASSWD: /home/jnxlr/PRO/WEB/CST/op-cap/scripts/usb_reset.sh
+jnxlr ALL=(root) NOPASSWD: /home/jnxlr/PRO/WEB/CST/op-cap/scripts/repair.sh
+jnxlr ALL=(root) NOPASSWD: /usr/bin/kill
+jnxlr ALL=(root) NOPASSWD: /usr/bin/systemctl stop usb-capture-ffmpeg.service
+jnxlr ALL=(root) NOPASSWD: /usr/bin/systemctl start usb-capture-ffmpeg.service
+jnxlr ALL=(root) NOPASSWD: /usr/bin/systemctl restart usb-capture-ffmpeg.service
