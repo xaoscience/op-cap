@@ -323,7 +323,7 @@ stop_auto_reconnect() {
     local PID=$(cat "$PID_FILE")
     if kill -0 "$PID" 2>/dev/null; then
       log_info "Stopping auto-reconnect monitor (PID: $PID)"
-      sudo kill "$PID" 2>/dev/null || true
+      kill "$PID" 2>/dev/null || true
       sleep 2
     fi
     rm -f "$PID_FILE"
