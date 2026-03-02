@@ -218,14 +218,6 @@ bash scripts/install-sudoers.sh  # Allows specific recovery scripts only
 
 See **[WAYLAND_OPTIMISATION.md](WAYLAND_OPTIMISATION.md#usb-capture-device-crash-recovery)** for detailed configuration and troubleshooting.
 
-### Troubleshooting OBS Connection
-
-- **Loopback device not created:** See above modprobe command
-- **Device disconnects under load:** Run `sudo ./scripts/maintenance.sh` → select repair (option 6)
-- **Auto-reconnect not working:** Check `journalctl -u usb-capture-monitor.service -f` for errors
-- **OBS crashes with "double free or corruption":** Use `obs-safe` launcher or `make optimise-drivers`
-- **HW acceleration crashes on Wayland:** Run `make optimise-drivers` to fix GPU driver issues
-
 ## Troubleshooting
 
 ### OBS-Related Issues
@@ -233,7 +225,9 @@ See **[WAYLAND_OPTIMISATION.md](WAYLAND_OPTIMISATION.md#usb-capture-device-crash
 - **Loopback device not created:** Run `sudo modprobe v4l2loopback video_nr=10 exclusive_caps=1` and restart OBS
 - **Device disconnects under load:** Run `sudo ./scripts/maintenance.sh` → select option 6 (repair)
 - **Auto-reconnect not working:** Check logs with `journalctl -u usb-capture-monitor.service -f`
-- **HW acceleration crashes on Wayland:** Run `make optimise-drivers` to fix GPU driver issues (see Wayland section below)
+- **OBS crashes with "double free or corruption":** Use `obs-safe-launch.sh` launcher or run `make optimise-drivers`
+- **HW acceleration crashes on Wayland:** Run `make optimise-drivers` to fix GPU driver issues (see Wayland section above)
+
 
 ### Service Debugging
 
@@ -483,11 +477,8 @@ ffmpeg -f v4l2 -i /dev/video0 \
 
 ### Why Use v4l2loopback Instead of Direct Capture
 
-Never capture the physical USB device directly in OBS. Always use the v4l2loopback bridge:
-
-**Why:**
 - **Isolation**: If the hardware hangs, only FFmpeg crashes (and auto-restarts), OBS continues
-- **Stability**: OBS doesn't touch unreliable hardware directly
+- **Stability**: OBS doesn't use unreliable hardware/ports directly
 - **Auto-recovery**: Automatic reconnection on device disconnect
 - **Compatibility**: Works with all capture devices, eliminates driver-specific crashes
 
