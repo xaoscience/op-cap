@@ -239,4 +239,11 @@ if ! sudo grep -q "EnvironmentFile=-/etc/default/usb-capture" /etc/systemd/syste
 fi
 sudo systemctl daemon-reload || true
 
+# Install host launch aliases (sobs/cobs)
+if [ -x "$BASEDIR/scripts/generate_obs_aliases.sh" ]; then
+  echo "Installing OBS safety aliases (sobs, cobs)..."
+  "$BASEDIR/scripts/generate_obs_aliases.sh" --basedir "$BASEDIR" || true
+fi
+
 echo "Install process finished. Check service status with: sudo systemctl status usb-capture-ffmpeg.service usb-capture-monitor.service"
+echo "Shortcuts: sobs (safe OBS no-loopback/no-device), cobs (pick capture device + safe OBS)"

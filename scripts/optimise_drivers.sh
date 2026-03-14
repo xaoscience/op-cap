@@ -292,6 +292,11 @@ WRAPPER_EOF
   info "Then use:"
   info "  obs-safe --device /dev/v4l/by-id/usb-ITE_UGREEN_25173_00000001-video-index0 --vidpid 3188:1000"
   info ""
+
+  if [ -x "$BASEDIR/scripts/generate_obs_aliases.sh" ]; then
+    info "Installing sobs/cobs launch aliases..."
+    sudo "$BASEDIR/scripts/generate_obs_aliases.sh" --basedir "$BASEDIR" || true
+  fi
 }
 
 # Verify PipeWire is configured

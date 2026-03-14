@@ -6,6 +6,10 @@ if [ -f "$BASEDIR/scripts/usbreset" ]; then
   rm -f "$BASEDIR/scripts/usbreset"
 fi
 
+if [ -x "$BASEDIR/scripts/generate_obs_aliases.sh" ]; then
+  "$BASEDIR/scripts/generate_obs_aliases.sh" --remove || true
+fi
+
 # Remove udev rules
 sudo rm -f /etc/udev/rules.d/99-ugreen.rules || true
 sudo rm -f /etc/udev/rules.d/99-usb-capture.rules || true

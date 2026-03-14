@@ -51,6 +51,16 @@ install-safe-launcher: build
 	@echo "Note: Use 'obs-safe' directly (wrapper created during driver optimization)"
 	@echo "      Or manually: obs-safe-launch --basedir /path/to/op-cap --device /dev/video0"
 
+install-aliases:
+	chmod +x scripts/generate_obs_aliases.sh
+	./scripts/generate_obs_aliases.sh --basedir "$(CURDIR)"
+	@echo "✓ sobs  -> safe OBS with --no-loopback --no-device"
+	@echo "✓ cobs  -> list /dev/video*, prompt, safe OBS --device=<selection>"
+
+remove-aliases:
+	./scripts/generate_obs_aliases.sh --remove
+	@echo "✓ sobs and cobs removed from /usr/local/bin"
+
 extract-driver-info: 
 	@./scripts/extract_driver_info.sh
 

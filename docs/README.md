@@ -32,6 +32,21 @@ Or install with driver optimisation in one step:
 make install-with-drivers
 ```
 
+After install, host aliases are created under `/usr/local/bin`:
+
+| Alias | What it does |
+|-------|--------------|
+| `sobs` | Launch OBS with crash recovery — no loopback, no device required (configure sources inside OBS) |
+| `cobs` | List available `/dev/video*` devices, prompt you to pick one, then launch OBS with crash recovery on that device |
+
+```bash
+# Just start OBS safely without any pre-wired device
+sobs
+
+# Pick your USB capture card from a menu, launch OBS bound to it
+cobs
+```
+
 Check status:
 ```bash
 sudo systemctl status usb-capture-ffmpeg.service usb-capture-monitor.service
@@ -168,6 +183,12 @@ sudo modprobe -r v4l2loopback && sudo modprobe v4l2loopback video_nr=10 card_lab
 If your capture card frequently disconnects or crashes OBS, use the **safety launcher** with built-in crash recovery:
 
 ```bash
+# Quickest way: pick your device from a menu (sobs / cobs aliases)
+cobs                          # list /dev/video*, pick one, launch safely
+sobs                          # launch safe OBS without a device (configure sources inside OBS)
+
+# --- Full CLI approach ---
+
 # Find your device VID:PID
 lsusb | grep -i "your-device"
 # Example: ID 3188:1000 ITE UGREEN 25173
