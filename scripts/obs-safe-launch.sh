@@ -35,6 +35,10 @@ CAP_FMT="${USB_CAPTURE_FORMAT:-NV12}"
 HDR_MODE="${USB_CAPTURE_HDR_MODE:-2}"
 USE_LOOPBACK=1
 ISOLATED_CONFIG_DIR=""
+NO_V4L2_SHIM_DIR=""
+STOP_REQUESTED=0
+SANDBOX_PROBED=0
+SANDBOX_SUPPORTED=0
 
 # Colors
 RED='\033[0;31m'
@@ -133,10 +137,36 @@ setup_isolated_obs_config() {
     return 0
   fi
 
+  local original_xdg_config
+  local original_obs_config
+  local isolated_obs_config
+
+  original_xdg_config="${XDG_CONFIG_HOME:-$HOME/.config}"
+  original_obs_config="$original_xdg_config/obs-studio"
+
   ISOLATED_CONFIG_DIR=$(mktemp -d /tmp/obs-safe-launch-config.XXXXXX)
+  isolated_obs_config="$ISOLATED_CONFIG_DIR/obs-studio"
+
+  mkdir -p "$isolated_obs_config/basic" "$isolated_obs_config/basic/scenes"
+
+  # Keep profile/settings convenience in --no-device mode while deliberately
+  # dropping scene collections (where capture sources are defined).
+  if [ -f "$original_obs_config/global.ini" ]; then
+    cp -f "$original_obs_config/global.ini" "$isolated_obs_config/global.ini" || true
+  fi
+
+  if [ -d "$original_obs_config/basic/profiles" ]; then
+    cp -a "$original_obs_config/basic/profiles" "$isolated_obs_config/basic/" || true
+  fi
+
+  if [ -d "$original_obs_config/plugin_config" ]; then
+    cp -a "$original_obs_config/plugin_config" "$isolated_obs_config/" || true
+  fi
+
   export XDG_CONFIG_HOME="$ISOLATED_CONFIG_DIR"
 
-  log_info "--no-device enabled: forcing no-loopback and isolated OBS config"
+  log_info "--no-device enabled: forcing no-loopback and scene-isolated OBS config"
+  log_info "Profiles/settings copied; scene collections intentionally not copied"
   log_info "Isolated config dir: $ISOLATED_CONFIG_DIR"
 }
 
@@ -411,23 +441,169 @@ load_driver_optimizations() {
   fi
 }
 
+request_stop() {
+  STOP_REQUESTED=1
+}
+
+probe_sandbox_support() {
+  if [ "$SANDBOX_PROBED" -eq 1 ]; then
+    return 0
+  fi
+
+  SANDBOX_PROBED=1
+
+  if ! command -v systemd-run >/dev/null 2>&1; then
+    log_warn "--no-device: systemd-run not available; sandbox disabled"
+    SANDBOX_SUPPORTED=0
+    return 0
+  fi
+
+  if ! systemctl --user show-environment >/dev/null 2>&1; then
+    log_warn "--no-device: user systemd session not available; sandbox disabled"
+    SANDBOX_SUPPORTED=0
+    return 0
+  fi
+
+  # Probe exactly the property support we need before launching OBS.
+  if systemd-run --user --wait --collect --quiet \
+      --property=PrivateDevices=yes \
+      /bin/true >/dev/null 2>&1; then
+    SANDBOX_SUPPORTED=1
+    log_info "--no-device: PrivateDevices sandbox available"
+  else
+    SANDBOX_SUPPORTED=0
+    log_warn "--no-device: PrivateDevices unsupported in this environment; sandbox disabled"
+  fi
+}
+
+setup_no_v4l2_preload() {
+  if [ "$SKIP_DEVICE_CHECK" -ne 1 ]; then
+    return 0
+  fi
+
+  if ! command -v gcc >/dev/null 2>&1; then
+    log_warn "--no-device: gcc not found; cannot build V4L2 obfuscation shim"
+    return 0
+  fi
+
+  NO_V4L2_SHIM_DIR=$(mktemp -d /tmp/obs-safe-launch-v4l2shim.XXXXXX)
+  cat > "$NO_V4L2_SHIM_DIR/hide_v4l2.c" <<'EOF'
+#define _GNU_SOURCE
+#include <dlfcn.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdarg.h>
+#include <string.h>
+#include <dirent.h>
+
+static int starts_with(const char *s, const char *p) {
+    return s && p && strncmp(s, p, strlen(p)) == 0;
+}
+
+static int block_path(const char *path) {
+    return starts_with(path, "/dev/video") ||
+           starts_with(path, "/dev/v4l") ||
+           starts_with(path, "/sys/class/video4linux") ||
+           starts_with(path, "/sys/devices/virtual/video4linux");
+}
+
+typedef int (*open_fn_t)(const char *, int, ...);
+typedef int (*openat_fn_t)(int, const char *, int, ...);
+typedef DIR *(*opendir_fn_t)(const char *);
+
+int open(const char *pathname, int flags, ...) {
+    static open_fn_t real_open = NULL;
+    if (!real_open) real_open = (open_fn_t)dlsym(RTLD_NEXT, "open");
+
+    if (block_path(pathname)) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    va_list ap;
+    va_start(ap, flags);
+    mode_t mode = va_arg(ap, mode_t);
+    va_end(ap);
+    return real_open(pathname, flags, mode);
+}
+
+int open64(const char *pathname, int flags, ...) {
+    static open_fn_t real_open64 = NULL;
+    if (!real_open64) real_open64 = (open_fn_t)dlsym(RTLD_NEXT, "open64");
+
+    if (block_path(pathname)) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    va_list ap;
+    va_start(ap, flags);
+    mode_t mode = va_arg(ap, mode_t);
+    va_end(ap);
+    return real_open64(pathname, flags, mode);
+}
+
+int openat(int dirfd, const char *pathname, int flags, ...) {
+    static openat_fn_t real_openat = NULL;
+    if (!real_openat) real_openat = (openat_fn_t)dlsym(RTLD_NEXT, "openat");
+
+    if (block_path(pathname)) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    va_list ap;
+    va_start(ap, flags);
+    mode_t mode = va_arg(ap, mode_t);
+    va_end(ap);
+    return real_openat(dirfd, pathname, flags, mode);
+}
+
+DIR *opendir(const char *name) {
+    static opendir_fn_t real_opendir = NULL;
+    if (!real_opendir) real_opendir = (opendir_fn_t)dlsym(RTLD_NEXT, "opendir");
+
+    if (block_path(name)) {
+        errno = ENOENT;
+        return NULL;
+    }
+
+    return real_opendir(name);
+}
+EOF
+
+  if gcc -shared -fPIC -O2 -o "$NO_V4L2_SHIM_DIR/hide_v4l2.so" "$NO_V4L2_SHIM_DIR/hide_v4l2.c" -ldl >/dev/null 2>&1; then
+    if [ -n "${LD_PRELOAD:-}" ]; then
+      export LD_PRELOAD="$NO_V4L2_SHIM_DIR/hide_v4l2.so:$LD_PRELOAD"
+    else
+      export LD_PRELOAD="$NO_V4L2_SHIM_DIR/hide_v4l2.so"
+    fi
+    log_info "--no-device: enabled V4L2 obfuscation shim via LD_PRELOAD"
+  else
+    log_warn "--no-device: failed to build V4L2 obfuscation shim"
+    rm -rf "$NO_V4L2_SHIM_DIR" || true
+    NO_V4L2_SHIM_DIR=""
+  fi
+}
+
 # Run OBS process. In --no-device mode, prefer a process-level device sandbox
 # so OBS cannot enumerate /dev/video* even if it probes hardware globally.
 run_obs() {
   if [ "$SKIP_DEVICE_CHECK" -eq 1 ]; then
-    if command -v systemd-run >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then
+    probe_sandbox_support
+    if [ "$SANDBOX_SUPPORTED" -eq 1 ]; then
       log_info "--no-device: launching OBS with systemd PrivateDevices sandbox"
-      systemd-run --user --scope --collect \
-        -p PrivateDevices=yes \
-        -p PrivateTmp=yes \
-        -p ProtectControlGroups=yes \
-        -p ProtectKernelTunables=yes \
+      systemd-run --user --wait --collect \
+        --property=PrivateDevices=yes \
+        --property=PrivateTmp=yes \
+        --property=ProtectControlGroups=yes \
+        --property=ProtectKernelTunables=yes \
         --quiet \
         obs $OBS_ARGS
       return $?
     fi
 
-    log_warn "--no-device: systemd user sandbox unavailable; using standard launch fallback"
+    log_warn "--no-device: using standard launch fallback"
   fi
 
   obs $OBS_ARGS
@@ -455,6 +631,11 @@ handle_obs_exit() {
   set +e  # Disable error exit for this function
   local exit_code="$1"
   local crash_attempt=1
+
+  if [ "$STOP_REQUESTED" -eq 1 ]; then
+    set -e
+    return 1
+  fi
   
   # Detect if OBS was streaming before crash
   detect_streaming_state && WAS_STREAMING=1
@@ -463,6 +644,12 @@ handle_obs_exit() {
 
   # Check if this was a crash (non-zero exit or signal)
   if [ "$exit_code" -ne 0 ]; then
+    if [ "$SKIP_DEVICE_CHECK" -eq 1 ]; then
+      log_error "--no-device mode: OBS exited non-zero ($exit_code); not auto-restarting to avoid crash loops"
+      set -e
+      return 1
+    fi
+
     if [ "$CRASH_THRESHOLD" -gt 0 ] && [ "$crash_attempt" -gt "$CRASH_THRESHOLD" ]; then
       log_error "Crash recovery blocked by OBS_SAFE_LAUNCH_CRASH_LIMIT=$CRASH_THRESHOLD"
       set -e
@@ -525,9 +712,11 @@ main() {
   pre_flight_checks
   load_driver_optimizations
   setup_isolated_obs_config
+  setup_no_v4l2_preload
 
   # Set up cleanup trap early
-  trap 'cleanup' EXIT INT TERM
+  trap 'request_stop' INT TERM
+  trap 'cleanup' EXIT
 
   if [ "$USE_LOOPBACK" -eq 1 ]; then
     # Step 1: load loopback
@@ -557,7 +746,7 @@ main() {
   echo ""
 
   # Main loop: launch OBS, restart on crash
-  while true; do
+  while [ "$STOP_REQUESTED" -eq 0 ]; do
     export GSETTINGS_SCHEMA_DIR=/usr/share/glib-2.0/schemas
 
     set +e  # Disable exit-on-error for OBS execution
@@ -595,6 +784,9 @@ cleanup() {
   stop_auto_reconnect
   if [ -n "${ISOLATED_CONFIG_DIR:-}" ] && [ -d "$ISOLATED_CONFIG_DIR" ]; then
     rm -rf "$ISOLATED_CONFIG_DIR" || true
+  fi
+  if [ -n "${NO_V4L2_SHIM_DIR:-}" ] && [ -d "$NO_V4L2_SHIM_DIR" ]; then
+    rm -rf "$NO_V4L2_SHIM_DIR" || true
   fi
   rm -f "$PID_FILE" "$STREAM_STATE_FILE"
   log_info "Shutdown complete"
