@@ -199,7 +199,7 @@ lsusb | grep -i "your-device"
 # Or for direct device mode (skip v4l2loopback relay) 
 ./scripts/obs-safe-launch.sh --no-loopback --device /dev/video0
 
-# Launch OBS without device requirement (configure sources manually)
+# Launch OBS in isolation mode (no device handling, no loopback, clean OBS config)
 ./scripts/obs-safe-launch.sh --no-device
 
 # Disable auto-resume if you don't want stream to restart after crash
@@ -221,7 +221,7 @@ lsusb | grep -i "your-device"
 | `--device PATH` | Specify USB capture device |
 | `--vidpid VID:PID` | USB vendor:product ID for device reset |
 | `--no-loopback` | Skip v4l2loopback, use device directly in OBS |
-| `--no-device` | Launch OBS without device (configure manually) |
+| `--no-device` | Isolated safety mode: no device handling, no loopback, clean temporary OBS config, and process-level `/dev/video*` isolation when available |
 | `--auto-resume` | Auto-resume streaming after crash (default: enabled) |
 | `--no-auto-resume` | Disable auto-stream-resume |
 | `--obs-args "ARGS"` | Pass additional arguments to OBS |

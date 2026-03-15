@@ -34,6 +34,7 @@ CAP_FPS="${USB_CAPTURE_FPS:-30}"
 CAP_FMT="${USB_CAPTURE_FORMAT:-NV12}"
 HDR_MODE="${USB_CAPTURE_HDR_MODE:-2}"
 USE_LOOPBACK=1
+ISOLATED_CONFIG_DIR=""
 
 # Colors
 RED='\033[0;31m'
@@ -76,7 +77,7 @@ Options:
   --obs-args "ARGS"      Extra arguments passed to OBS
   --no-loopback          Skip v4l2loopback/feed.sh and launch OBS direct
   --direct-device        Alias for --no-loopback
-  --no-device            Launch OBS without device requirement (configure sources manually)
+  --no-device            Launch OBS in isolation mode (no device, no loopback, clean config)
   --auto-resume          Enable automatic stream resumption after crash (default: enabled)
   --no-auto-resume       Disable automatic stream resumption after crash
   --help                 Show this help
@@ -103,7 +104,10 @@ parse_args() {
       --no-loopback|--direct-device)
         USE_LOOPBACK=0; shift;;
       --no-device)
-        SKIP_DEVICE_CHECK=1; shift;;
+        SKIP_DEVICE_CHECK=1
+        USE_LOOPBACK=0
+        shift
+        ;;
       --auto-resume)
         AUTO_RESUME_ENABLED=1; shift;;
       --no-auto-resume)
@@ -120,6 +124,20 @@ parse_args() {
         OBS_ARGS="$OBS_ARGS $1"; shift;;
     esac
   done
+}
+
+# In --no-device mode, launch OBS with a clean config path so old scenes
+# containing unstable capture sources are not auto-loaded.
+setup_isolated_obs_config() {
+  if [ "$SKIP_DEVICE_CHECK" -ne 1 ]; then
+    return 0
+  fi
+
+  ISOLATED_CONFIG_DIR=$(mktemp -d /tmp/obs-safe-launch-config.XXXXXX)
+  export XDG_CONFIG_HOME="$ISOLATED_CONFIG_DIR"
+
+  log_info "--no-device enabled: forcing no-loopback and isolated OBS config"
+  log_info "Isolated config dir: $ISOLATED_CONFIG_DIR"
 }
 
 # Create log directory
@@ -393,6 +411,28 @@ load_driver_optimizations() {
   fi
 }
 
+# Run OBS process. In --no-device mode, prefer a process-level device sandbox
+# so OBS cannot enumerate /dev/video* even if it probes hardware globally.
+run_obs() {
+  if [ "$SKIP_DEVICE_CHECK" -eq 1 ]; then
+    if command -v systemd-run >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then
+      log_info "--no-device: launching OBS with systemd PrivateDevices sandbox"
+      systemd-run --user --scope --collect \
+        -p PrivateDevices=yes \
+        -p PrivateTmp=yes \
+        -p ProtectControlGroups=yes \
+        -p ProtectKernelTunables=yes \
+        --quiet \
+        obs $OBS_ARGS
+      return $?
+    fi
+
+    log_warn "--no-device: systemd user sandbox unavailable; using standard launch fallback"
+  fi
+
+  obs $OBS_ARGS
+}
+
 # Check if OBS was streaming via websocket or log file
 detect_streaming_state() {
   # Check recent log for streaming indicators
@@ -484,6 +524,7 @@ main() {
 
   pre_flight_checks
   load_driver_optimizations
+  setup_isolated_obs_config
 
   # Set up cleanup trap early
   trap 'cleanup' EXIT INT TERM
@@ -520,7 +561,7 @@ main() {
     export GSETTINGS_SCHEMA_DIR=/usr/share/glib-2.0/schemas
 
     set +e  # Disable exit-on-error for OBS execution
-    obs $OBS_ARGS 2>&1 | tee -a "$LOG_FILE"
+    run_obs 2>&1 | tee -a "$LOG_FILE"
     EXIT_CODE=${PIPESTATUS[0]}
     set -e  # Re-enable exit-on-error
     
@@ -552,6 +593,9 @@ cleanup() {
   log_info "Cleaning up..."
   stop_feed
   stop_auto_reconnect
+  if [ -n "${ISOLATED_CONFIG_DIR:-}" ] && [ -d "$ISOLATED_CONFIG_DIR" ]; then
+    rm -rf "$ISOLATED_CONFIG_DIR" || true
+  fi
   rm -f "$PID_FILE" "$STREAM_STATE_FILE"
   log_info "Shutdown complete"
 }
