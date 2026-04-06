@@ -1,0 +1,764 @@
+{
+  "metadata": {
+    "repository": "op-cap",
+    "current_branch": "main",
+    "repo_url": "https://github.com/XAOSTECH/op-cap",
+    "generated": "2026-04-06T02:06:45Z",
+    "max_commits": 500
+  },
+  "commits": [
+    {
+      "sha": "85cc669f1a6de5879ac15a25497d3375683a2828",
+      "short": "85cc669",
+      "parents": "1ece3e53e26fa6a70712ae382f8166ae3d7d404f a825a385b61a6fefd6fd7da27ae9b21426b51d04",
+      "author": "xaostech[bot]",
+      "email": "260314499+xaostech[bot]@users.noreply.github.com",
+      "date": "2026-04-01T02:08:58Z",
+      "timestamp": 1775009338,
+      "subject": "Merge pull request #1 from XAOSTECH:anglicise/20260401-020828",
+      "refs": "HEAD -> main, origin/main",
+      "position": {
+        "x": 600,
+        "y": 60,
+        "lane": 0,
+        "radius": 10,
+        "depth": 0,
+        "is_trunk": true,
+        "is_merge": true,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "a825a385b61a6fefd6fd7da27ae9b21426b51d04",
+      "short": "a825a38",
+      "parents": "1ece3e53e26fa6a70712ae382f8166ae3d7d404f",
+      "author": "xaos-bot",
+      "email": "262248812+xaos-bot@users.noreply.github.com",
+      "date": "2026-04-01T02:08:28Z",
+      "timestamp": 1775009308,
+      "subject": "chore: convert American spellings to British English",
+      "refs": "origin/anglicise/20260401-020828",
+      "position": {
+        "x": 720,
+        "y": 100,
+        "lane": 1,
+        "radius": 6,
+        "depth": 1,
+        "is_trunk": false,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "1ece3e53e26fa6a70712ae382f8166ae3d7d404f",
+      "short": "1ece3e5",
+      "parents": "2eb8025477c4e0ca581d8286ebaa875d7b760663",
+      "author": "xaos-bot",
+      "email": "262248812+xaos-bot@users.noreply.github.com",
+      "date": "2026-03-30T02:05:52Z",
+      "timestamp": 1774836352,
+      "subject": "chore: update CHANGELOG for v0.1.0 (re-release)",
+      "refs": "tag: v0.1.0, tag: latest",
+      "position": {
+        "x": 600,
+        "y": 180,
+        "lane": 0,
+        "radius": 9,
+        "depth": 2,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": true
+      }
+    },
+    {
+      "sha": "2eb8025477c4e0ca581d8286ebaa875d7b760663",
+      "short": "2eb8025",
+      "parents": "41d04d457a879d62ba04b5ef9d1632911997ba22",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-23T17:55:09+01:00",
+      "timestamp": 1774284909,
+      "subject": "chore(dc-init): load workflows,actions",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 220,
+        "lane": 0,
+        "radius": 6,
+        "depth": 3,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "41d04d457a879d62ba04b5ef9d1632911997ba22",
+      "short": "41d04d4",
+      "parents": "d54c781ebdba50361ea552378f27fbef712aa33a",
+      "author": "XAOSTECH",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-15T07:51:54+01:00",
+      "timestamp": 1773557514,
+      "subject": "Improve --no-device isolation and preserve OBS settings",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 260,
+        "lane": 0,
+        "radius": 6,
+        "depth": 4,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "d54c781ebdba50361ea552378f27fbef712aa33a",
+      "short": "d54c781",
+      "parents": "53e140c15d555a2a3b6a2a62d1785d922dcfeac8",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-15T06:29:18+01:00",
+      "timestamp": 1773552558,
+      "subject": "chore(dc-init): update workflows,actions",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 300,
+        "lane": 0,
+        "radius": 6,
+        "depth": 5,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "53e140c15d555a2a3b6a2a62d1785d922dcfeac8",
+      "short": "53e140c",
+      "parents": "b42b109d088d94ea7838e8519b663dca78c491c0",
+      "author": "XAOSTECH",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-15T03:50:17+01:00",
+      "timestamp": 1773543017,
+      "subject": "Harden --no-device mode with process-level isolation",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 340,
+        "lane": 0,
+        "radius": 6,
+        "depth": 6,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "b42b109d088d94ea7838e8519b663dca78c491c0",
+      "short": "b42b109",
+      "parents": "b941e013061089f817393651095b8611b9ad2c8a",
+      "author": "XAOSTECH",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-14T20:36:34+01:00",
+      "timestamp": 1773516994,
+      "subject": "feat: add sobs/cobs host aliases and Makefile targets",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 380,
+        "lane": 0,
+        "radius": 6,
+        "depth": 7,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "b941e013061089f817393651095b8611b9ad2c8a",
+      "short": "b941e01",
+      "parents": "3475fa6e848f2c2e71694386ea40a5db241eac2f",
+      "author": "xaos-bot",
+      "email": "262248812+xaos-bot@users.noreply.github.com",
+      "date": "2026-03-06T04:43:25Z",
+      "timestamp": 1772772205,
+      "subject": "chore: update CHANGELOG for v0.1.0",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 420,
+        "lane": 0,
+        "radius": 6,
+        "depth": 8,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "3475fa6e848f2c2e71694386ea40a5db241eac2f",
+      "short": "3475fa6",
+      "parents": "8a1e113193cd94a0d106c23daf01365f48a27bd1",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-06T05:32:42+01:00",
+      "timestamp": 1772771562,
+      "subject": "chore(dc-init): update workflows and actions",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 460,
+        "lane": 0,
+        "radius": 6,
+        "depth": 9,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "8a1e113193cd94a0d106c23daf01365f48a27bd1",
+      "short": "8a1e113",
+      "parents": "0678f7ca888f144c92782736d8cf6c6c7c8c9625",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-06T02:55:41+01:00",
+      "timestamp": 1772762141,
+      "subject": "Fix crash recovery limit logic: default unlimited, non-cumulative",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 500,
+        "lane": 0,
+        "radius": 6,
+        "depth": 10,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "0678f7ca888f144c92782736d8cf6c6c7c8c9625",
+      "short": "0678f7c",
+      "parents": "42f908b28f12f2429083e46d8462f5ad78c07590",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-02T01:20:38+01:00",
+      "timestamp": 1772410838,
+      "subject": "fix(readme)",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 540,
+        "lane": 0,
+        "radius": 6,
+        "depth": 11,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "42f908b28f12f2429083e46d8462f5ad78c07590",
+      "short": "42f908b",
+      "parents": "e54b95924c2631589724c3d3f70a31e95069eea7",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-01T06:46:44+01:00",
+      "timestamp": 1772344004,
+      "subject": "Remove unnecessary sudo from kill in cleanup",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 580,
+        "lane": 0,
+        "radius": 6,
+        "depth": 12,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "e54b95924c2631589724c3d3f70a31e95069eea7",
+      "short": "e54b959",
+      "parents": "5d18e93ae1b76c39ab7b5943be1ca171830c06a2",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-01T05:50:43+01:00",
+      "timestamp": 1772340643,
+      "subject": "Add sudoers rule for passwordless crash recovery",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 620,
+        "lane": 0,
+        "radius": 6,
+        "depth": 13,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "5d18e93ae1b76c39ab7b5943be1ca171830c06a2",
+      "short": "5d18e93",
+      "parents": "ae536f7cd58ee858b9a013f210cf1fc96be4fc7e",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-03-01T01:58:27+01:00",
+      "timestamp": 1772326707,
+      "subject": "Fix: handle crash recovery with proper error handling",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 660,
+        "lane": 0,
+        "radius": 6,
+        "depth": 14,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "ae536f7cd58ee858b9a013f210cf1fc96be4fc7e",
+      "short": "ae536f7",
+      "parents": "c3898baf60eaaf3aa766a519790a32c161b2b715",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-28T17:43:15+01:00",
+      "timestamp": 1772296995,
+      "subject": "Update: document safety launcher with latest crash recovery features",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 700,
+        "lane": 0,
+        "radius": 6,
+        "depth": 15,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c3898baf60eaaf3aa766a519790a32c161b2b715",
+      "short": "c3898ba",
+      "parents": "549946244a6e3b19d79d496e0cea0ee728c5bf9c",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-28T05:36:26+01:00",
+      "timestamp": 1772253386,
+      "subject": "Fix: disable set -e for OBS execution to allow crash recovery",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 740,
+        "lane": 0,
+        "radius": 6,
+        "depth": 16,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "549946244a6e3b19d79d496e0cea0ee728c5bf9c",
+      "short": "5499462",
+      "parents": "c10ea31dee72030c16bbf2cf2f712051e6ebb8d0",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-28T04:41:13+01:00",
+      "timestamp": 1772250073,
+      "subject": "Add explicit debug logging for crash recovery troubleshooting",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 780,
+        "lane": 0,
+        "radius": 6,
+        "depth": 17,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c10ea31dee72030c16bbf2cf2f712051e6ebb8d0",
+      "short": "c10ea31",
+      "parents": "b2652d17671072090c1184534f8df5ed39a070c7",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-28T04:05:01+01:00",
+      "timestamp": 1772247901,
+      "subject": "Fix recovery timeout and stream state detection",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 820,
+        "lane": 0,
+        "radius": 6,
+        "depth": 18,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "b2652d17671072090c1184534f8df5ed39a070c7",
+      "short": "b2652d1",
+      "parents": "fc3b747325cc2da98d8a70bd7d59814347fde1eb",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-28T04:00:31+01:00",
+      "timestamp": 1772247631,
+      "subject": "Fix auto-resume to only restart stream after crash, not on first launch",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 860,
+        "lane": 0,
+        "radius": 6,
+        "depth": 19,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "fc3b747325cc2da98d8a70bd7d59814347fde1eb",
+      "short": "fc3b747",
+      "parents": "2b5d980f59fb98caf26368784d99ab4f3557c641",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-28T03:56:27+01:00",
+      "timestamp": 1772247387,
+      "subject": "Add automatic stream resumption after crash recovery > > - Add --auto-stream flag to manually enable streaming on launch > - Detect streaming state before crash by monitoring OBS logs > - Auto-inject --startstreaming flag when restarting after crash > - Preserve STREAM_STATE_FILE across crash recovery cycles > - Resume streaming automatically if OBS was streaming before crash",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 900,
+        "lane": 0,
+        "radius": 6,
+        "depth": 20,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "2b5d980f59fb98caf26368784d99ab4f3557c641",
+      "short": "2b5d980",
+      "parents": "e70830c3284539006f28a7bbac5c50836318466e",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-28T02:18:27+01:00",
+      "timestamp": 1772241507,
+      "subject": "obs-safe-launch: add --no-device for manual OBS config without device requirement",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 940,
+        "lane": 0,
+        "radius": 6,
+        "depth": 21,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "e70830c3284539006f28a7bbac5c50836318466e",
+      "short": "e70830c",
+      "parents": "6669a0223ee2ad4b1e402b9fcd9e06e7ee16a067",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-28T01:50:47+01:00",
+      "timestamp": 1772239847,
+      "subject": "obs-safe-launch: add direct-device mode without loopback",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 980,
+        "lane": 0,
+        "radius": 6,
+        "depth": 22,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "6669a0223ee2ad4b1e402b9fcd9e06e7ee16a067",
+      "short": "6669a02",
+      "parents": "c2df90609590e341fbf090ef882ebed9db2372ac",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T19:35:30+01:00",
+      "timestamp": 1772217330,
+      "subject": "feat(src): LD_PRELOAD shim to fix V4L2 loopback HDR colorspace",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1020,
+        "lane": 0,
+        "radius": 6,
+        "depth": 23,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c2df90609590e341fbf090ef882ebed9db2372ac",
+      "short": "c2df906",
+      "parents": "67b96ca3cd29831d63cb7a3546bfae51125d8148",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T18:25:10+01:00",
+      "timestamp": 1772213110,
+      "subject": "fix(obs-safe-launch): scan for loopback device instead of assuming video_nr",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1060,
+        "lane": 0,
+        "radius": 6,
+        "depth": 24,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "67b96ca3cd29831d63cb7a3546bfae51125d8148",
+      "short": "67b96ca",
+      "parents": "1ddb2afa1e427bcd8604e5a66471568825fd7866",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-27T18:01:08+01:00",
+      "timestamp": 1772211668,
+      "subject": "fix(feed.sh): preserve NV12 and propagate HDR metadata through loopback",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1100,
+        "lane": 0,
+        "radius": 6,
+        "depth": 25,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "1ddb2afa1e427bcd8604e5a66471568825fd7866",
+      "short": "1ddb2af",
+      "parents": "e1a56013979cfc8ed1ee116dbd4ec06c15d43310",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T23:52:43+01:00",
+      "timestamp": 1771887163,
+      "subject": "docs: add P010 HDR format support details and accuracy data",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1140,
+        "lane": 0,
+        "radius": 6,
+        "depth": 26,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "e1a56013979cfc8ed1ee116dbd4ec06c15d43310",
+      "short": "e1a5601",
+      "parents": "c3813fc5fe25adb3430cb279c4d7c411fe96fe69",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-23T01:11:39+01:00",
+      "timestamp": 1771805499,
+      "subject": "dc-init",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1180,
+        "lane": 0,
+        "radius": 6,
+        "depth": 27,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "c3813fc5fe25adb3430cb279c4d7c411fe96fe69",
+      "short": "c3813fc",
+      "parents": "3467107c80c904d86d206e3e69b78e66a5c7bc53",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T00:33:59+01:00",
+      "timestamp": 1771457639,
+      "subject": "refactor: Simplify obs-safe wrapper and add USB stability guide",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1220,
+        "lane": 0,
+        "radius": 6,
+        "depth": 28,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "3467107c80c904d86d206e3e69b78e66a5c7bc53",
+      "short": "3467107",
+      "parents": "bddba2fa6dacd2b48103ff39e28a057d142ce701",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T00:19:30+01:00",
+      "timestamp": 1771456770,
+      "subject": "feat: Add official UGREEN driver documentation and fix obs-safe launcher paths",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1260,
+        "lane": 0,
+        "radius": 6,
+        "depth": 29,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "bddba2fa6dacd2b48103ff39e28a057d142ce701",
+      "short": "bddba2f",
+      "parents": "1da6177c23e18c2f38419a276777df7af52b5007",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-19T00:11:09+01:00",
+      "timestamp": 1771456269,
+      "subject": "feat: Add OBS safe launcher with USB device crash recovery",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1300,
+        "lane": 0,
+        "radius": 6,
+        "depth": 30,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "1da6177c23e18c2f38419a276777df7af52b5007",
+      "short": "1da6177",
+      "parents": "68e2512d71e34210b97e699cc73e2b2c9dd908dc",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2026-02-18T23:59:05+01:00",
+      "timestamp": 1771455545,
+      "subject": "dc-contain",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1340,
+        "lane": 0,
+        "radius": 6,
+        "depth": 31,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "68e2512d71e34210b97e699cc73e2b2c9dd908dc",
+      "short": "68e2512",
+      "parents": "ff9c653882741f4ed224c6ffe163116df5de8647",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2025-12-13T15:07:31+01:00",
+      "timestamp": 1765634851,
+      "subject": "feat: refactor maintenance system with centralised dispatcher and recovery tools",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1380,
+        "lane": 0,
+        "radius": 6,
+        "depth": 32,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "ff9c653882741f4ed224c6ffe163116df5de8647",
+      "short": "ff9c653",
+      "parents": "49587641871678e2b481deecc9b4473143cc4f96",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2025-12-13T12:32:03+01:00",
+      "timestamp": 1765625523,
+      "subject": "feat: add OBS Wayland GPU driver optimisation script",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1420,
+        "lane": 0,
+        "radius": 6,
+        "depth": 33,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    },
+    {
+      "sha": "49587641871678e2b481deecc9b4473143cc4f96",
+      "short": "4958764",
+      "parents": "",
+      "author": "xaoscience",
+      "email": "69734795+xaoscience@users.noreply.github.com",
+      "date": "2025-12-10T13:08:04+01:00",
+      "timestamp": 1765368484,
+      "subject": "Init",
+      "refs": "",
+      "position": {
+        "x": 600,
+        "y": 1460,
+        "lane": 0,
+        "radius": 6,
+        "depth": 34,
+        "is_trunk": true,
+        "is_merge": false,
+        "is_fork": false
+      }
+    }
+  ],
+  "branches": [
+    {
+      "name": "85cc669f1a6de5879ac15a25497d3375683a2828 Merge pull request #1 from XAOSTECH:anglicise/20260401-020828",
+      "sha": "*",
+      "current": false,
+      "merged": false
+    }
+  ],
+  "tags": [
+    {
+      "name": "latest",
+      "sha": "992386551bb737d39250fd95538bd616cc64c39e"
+    },
+    {
+      "name": "v0.1.0",
+      "sha": "b819f481fd33019c36dab69ddbf420c8de928489"
+    }
+  ]
+}
