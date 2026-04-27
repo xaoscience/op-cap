@@ -1,4 +1,31 @@
 
+## [0.1.0] - 2026-04-27 (re-release)
+
+### Added
+- add sobs/cobs host aliases and Makefile targets
+
+### Fixed
+- fix(readme)
+
+### Changed
+- chore: update git tree visualisation
+- chore: update git tree visualisation
+- chore: update git tree visualisation
+- Merge pull request #1 from XAOSTECH:anglicise/20260401-020828
+- chore: convert American spellings to British English
+- chore: update CHANGELOG for v0.1.0 (re-release)
+- chore(dc-init): load workflows,actions
+- Improve --no-device isolation and preserve OBS settings
+- chore(dc-init): update workflows,actions
+- Harden --no-device mode with process-level isolation
+- chore: update CHANGELOG for v0.1.0
+- chore(dc-init): update workflows and actions
+- Fix crash recovery limit logic: default unlimited, non-cumulative
+- Remove unnecessary sudo from kill in cleanup
+- Add sudoers rule for passwordless crash recovery
+- Fix: handle crash recovery with proper error handling
+- Update: document safety launcher with latest crash recovery features
+
 ## [0.1.0] - 2026-03-30 (re-release)
 
 ### Added
