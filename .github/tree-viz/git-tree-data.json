@@ -3,10 +3,21 @@
     "repository": "op-cap",
     "current_branch": "main",
     "repo_url": "https://github.com/XAOSTECH/op-cap",
-    "generated": "2026-06-15T03:46:28Z",
+    "generated": "2026-06-22T03:46:12Z",
     "max_commits": 500
   },
   "commits": [
+  {
+    "sha": "fc5cfd683b3faab05f42d141e67e659bd8a27910",
+    "short": "fc5cfd6",
+    "parents": "68c3df512dab15d74c0fde689cebc8065ce2c035",
+    "author": "xaos-bot",
+    "email": "262248812+xaos-bot@users.noreply.github.com",
+    "date": "2026-06-15T03:46:28Z",
+    "timestamp": 1781495188,
+    "subject": "chore: update git tree visualisation",
+    "refs": "HEAD -> main, origin/main"
+  },
   {
     "sha": "68c3df512dab15d74c0fde689cebc8065ce2c035",
     "short": "68c3df5",
@@ -16,7 +27,7 @@
     "date": "2026-06-08T03:34:44Z",
     "timestamp": 1780889684,
     "subject": "chore: update CHANGELOG for v0.1.0 (re-release)",
-    "refs": "HEAD -> main, tag: v0.1.0, tag: latest, origin/main"
+    "refs": "tag: v0.1.0, tag: latest"
   },
   {
     "sha": "dd727f0e76a30fea8f493a8d5e9a91010e9b0254",
@@ -504,7 +515,7 @@
   }
 ],
   "branches": [
-  {"name":"68c3df512dab15d74c0fde689cebc8065ce2c035 chore: update CHANGELOG for v0.1.0 (re-release)","sha":"*","current":false,"merged":false}
+  {"name":"fc5cfd683b3faab05f42d141e67e659bd8a27910 chore: update git tree visualisation","sha":"*","current":false,"merged":false}
 ],
   "tags": [
   {"name":"latest","sha":"755f50588e22d0e45f3f049cc8e7cfe437906dce"},
