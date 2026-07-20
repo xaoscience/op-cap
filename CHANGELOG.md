@@ -1,4 +1,27 @@
 
+## [0.1.0] - 2026-07-20 (re-release)
+
+### Changed
+- chore: update git tree visualisation
+- chore: update git tree visualisation
+- chore: update git tree visualisation
+- chore: update git tree visualisation
+- chore: update git tree visualisation
+- chore: update CHANGELOG for v0.1.0 (re-release)
+- chore: update git tree visualisation
+- chore: update git tree visualisation
+- chore: update git tree visualisation
+- chore: update git tree visualisation
+- chore: update git tree visualisation
+- chore: update CHANGELOG for v0.1.0 (re-release)
+- chore: update git tree visualisation
+- chore: update git tree visualisation
+- chore: update git tree visualisation
+- Merge pull request #1 from XAOSTECH:anglicise/20260401-020828
+- chore: convert American spellings to British English
+- chore: update CHANGELOG for v0.1.0 (re-release)
+- chore(dc-init): load workflows,actions
+
 ## [0.1.0] - 2026-06-08 (re-release)
 
 ### Added
